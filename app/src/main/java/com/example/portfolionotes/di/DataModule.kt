@@ -1,6 +1,7 @@
 package com.example.portfolionotes.di
 
 import android.content.Context
+import androidx.room.Room
 import com.example.portfolionotes.data.NotesDao
 import com.example.portfolionotes.data.NotesDatabase
 import com.example.portfolionotes.data.NotesRepositoryImpl
@@ -29,7 +30,11 @@ interface DataModule {
         fun provideNotesDatabase(
             @ApplicationContext context: Context
         ): NotesDatabase {
-            return NotesDatabase.getInstance(context)
+            return Room.databaseBuilder(
+                context = context,
+                klass = NotesDatabase::class.java,
+                name = "notes.db"
+            ).fallbackToDestructiveMigration(dropAllTables = true).build()
         }
 
         @Singleton

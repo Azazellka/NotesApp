@@ -1,11 +1,11 @@
 package com.example.portfolionotes.presentation.screens.creation
 
-import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.portfolionotes.data.NotesRepositoryImpl
-import com.example.portfolionotes.data.TestNotesRepositoryImpl
 import com.example.portfolionotes.domain.AddNoteUseCase
+import com.example.portfolionotes.domain.ContentItem
+import com.example.portfolionotes.presentation.screens.creation.CreateNoteState.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,12 +29,19 @@ class CreateNoteViewModel @Inject constructor(
             is CreateNoteCommand.InputContent -> {
                 _state.update { previousState ->
                     if (previousState is CreateNoteState.Creation) {
+                        val newContent = previousState.content
+                            .mapIndexed { index, contentItem ->
+                                if (index == command.index && contentItem is ContentItem.Text) {
+                                    contentItem.copy(content = command.content)
+                                } else {
+                                    contentItem
+                                }
+                            }
                         previousState.copy(
-                            content = command.content,
-                            isSaveEnable = previousState.content.isNotBlank() && previousState.title.isNotBlank()
+                            content = newContent,
                         )
                     } else {
-                        CreateNoteState.Creation(content = command.content)
+                        previousState
                     }
                 }
             }
@@ -43,10 +50,9 @@ class CreateNoteViewModel @Inject constructor(
                     if (previousState is CreateNoteState.Creation) {
                         previousState.copy(
                             title = command.title,
-                            isSaveEnable = previousState.content.isNotBlank() && previousState.title.isNotBlank()
                         )
                     } else {
-                        CreateNoteState.Creation(title = command.title)
+                        Creation(title = command.title)
                     }
                 }
             }
@@ -55,12 +61,31 @@ class CreateNoteViewModel @Inject constructor(
                     _state.update { previousState ->
                         if (previousState is CreateNoteState.Creation) {
                             val title = previousState.title
-                            val content = previousState.content
+                            val content = previousState.content.filter {
+                                it !is ContentItem.Text || it.content.isNotBlank()
+                            }
                             addNoteUseCase(title = title, content = content)
                             CreateNoteState.Finished
                         } else {
                             previousState
                         }
+                    }
+                }
+            }
+
+            is CreateNoteCommand.AddImage -> {
+                _state.update { previousState ->
+                    if (previousState is CreateNoteState.Creation) {
+                        val newItems = previousState.content.toMutableList()
+                        val lastItem = newItems.last()
+                        if (lastItem is ContentItem.Text && lastItem.content.isBlank()) {
+                            newItems.removeAt(newItems.lastIndex)
+                        }
+                        newItems.add(ContentItem.Image(url = command.uri.toString()))
+                        newItems.add(ContentItem.Text(content = ""))
+                        previousState.copy(content = newItems)
+                    } else {
+                        previousState
                     }
                 }
             }
@@ -71,9 +96,21 @@ class CreateNoteViewModel @Inject constructor(
 sealed interface CreateNoteState {
     data class Creation(
         val title: String = "",
-        val content: String = "",
-        val isSaveEnable: Boolean = false
-    ) : CreateNoteState
+        val content: List<ContentItem> = listOf(ContentItem.Text("")),
+    ) : CreateNoteState {
+        val isSaveEnable: Boolean
+            get() {
+                return when{
+                    title.isBlank() -> false
+                    content.isEmpty() -> false
+                    else -> {
+                        content.any {
+                           it !is ContentItem.Text || it.content.isNotBlank()
+                        }
+                    }
+                }
+            }
+    }
 
     data object Finished : CreateNoteState
 }
@@ -84,8 +121,11 @@ sealed interface CreateNoteCommand {
     ) : CreateNoteCommand
 
     data class InputContent(
-        val content: String
+        val content: String,
+        val index: Int
     ) : CreateNoteCommand
+
+    data class AddImage(val uri: Uri): CreateNoteCommand
 
     data object Save : CreateNoteCommand
 

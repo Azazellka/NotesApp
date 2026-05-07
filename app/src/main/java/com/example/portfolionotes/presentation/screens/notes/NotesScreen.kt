@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.portfolionotes.R
+import com.example.portfolionotes.domain.ContentItem
 import com.example.portfolionotes.domain.Note
 import com.example.portfolionotes.presentation.utils.DataFormatter
 import com.example.portfolionotes.ui.theme.OtherNotesColors
@@ -271,13 +272,18 @@ fun NotesCard(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier.height(24.dp))
-        Text(
-            text = note.content,
-            fontSize = 16.sp,
-            maxLines = 3,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Medium,
-            overflow = TextOverflow.Ellipsis
-        )
+        note.content
+            .filterIsInstance<ContentItem.Text>()
+            .joinToString("\n")
+            .let {
+                Text(
+                    text = it,
+                    fontSize = 16.sp,
+                    maxLines = 3,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
     }
 }
