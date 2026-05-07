@@ -1,10 +1,7 @@
 package com.example.portfolionotes.presentation.screens.notes
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.portfolionotes.data.NotesRepositoryImpl
-import com.example.portfolionotes.data.TestNotesRepositoryImpl
 import com.example.portfolionotes.domain.GetAllNotesUseCase
 import com.example.portfolionotes.domain.Note
 import com.example.portfolionotes.domain.SearchNotesUseCase

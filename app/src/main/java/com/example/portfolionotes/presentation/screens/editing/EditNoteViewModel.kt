@@ -1,10 +1,8 @@
 package com.example.portfolionotes.presentation.screens.editing
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.portfolionotes.data.NotesRepositoryImpl
-import com.example.portfolionotes.data.TestNotesRepositoryImpl
+import com.example.portfolionotes.domain.ContentItem
 import com.example.portfolionotes.domain.DeleteNoteUseCase
 import com.example.portfolionotes.domain.EditNoteUseCase
 import com.example.portfolionotes.domain.GetNoteUseCase
@@ -17,18 +15,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
 @HiltViewModel(assistedFactory = EditNoteViewModel.Factory::class)
 class EditNoteViewModel @AssistedInject constructor(
     @Assisted("noteId") private val noteId: Int,
     val getNoteUseCase: GetNoteUseCase,
     val deleteNoteUseCase: DeleteNoteUseCase,
     val editNoteUseCase: EditNoteUseCase
-): ViewModel() {
+) : ViewModel() {
 
     private val _state = MutableStateFlow<EditNoteState>(EditNoteState.Initial)
     val state = _state.asStateFlow()
 
-    init{
+    init {
         viewModelScope.launch {
             _state.update {
                 val note = getNoteUseCase(noteId)
@@ -42,6 +41,7 @@ class EditNoteViewModel @AssistedInject constructor(
             EditNoteCommand.Back -> {
                 _state.update { EditNoteState.Finished }
             }
+
             EditNoteCommand.Delete -> {
                 viewModelScope.launch {
                     _state.update { previousState ->
@@ -55,16 +55,19 @@ class EditNoteViewModel @AssistedInject constructor(
                     }
                 }
             }
+
             is EditNoteCommand.InputContent -> {
                 _state.update { previousState ->
                     if (previousState is EditNoteState.Editing) {
-                        val newNote = previousState.note.copy(content = command.content)
+                        val newContent = ContentItem.Text(content = command.content)
+                        val newNote = previousState.note.copy(content = listOf(newContent))
                         previousState.copy(note = newNote)
                     } else {
                         previousState
                     }
                 }
             }
+
             is EditNoteCommand.InputTitle -> {
                 _state.update { previousState ->
                     if (previousState is EditNoteState.Editing) {
@@ -75,6 +78,7 @@ class EditNoteViewModel @AssistedInject constructor(
                     }
                 }
             }
+
             EditNoteCommand.Save -> {
                 viewModelScope.launch {
                     _state.update { previousState ->
@@ -101,30 +105,40 @@ class EditNoteViewModel @AssistedInject constructor(
 }
 
 sealed interface EditNoteState {
-    data object Initial: EditNoteState
+    data object Initial : EditNoteState
 
     data class Editing(
         val note: Note
-    ): EditNoteState {
+    ) : EditNoteState {
         val isSaveEnable: Boolean
-            get() = note.title.isNotBlank() && note.content.isNotBlank()
+            get() {
+                return when {
+                    note.title.isBlank() -> false
+                    note.content.isEmpty() -> false
+                    else -> {
+                        note.content.any {
+                            it !is ContentItem.Text || it.content.isNotBlank()
+                        }
+                    }
+                }
+            }
     }
 
-    data object Finished: EditNoteState
+    data object Finished : EditNoteState
 }
 
 sealed interface EditNoteCommand {
     data class InputTitle(
         val title: String
-    ): EditNoteCommand
+    ) : EditNoteCommand
 
     data class InputContent(
         val content: String
-    ): EditNoteCommand
+    ) : EditNoteCommand
 
-    data object Back: EditNoteCommand
+    data object Back : EditNoteCommand
 
-    data object Save: EditNoteCommand
+    data object Save : EditNoteCommand
 
-    data object Delete: EditNoteCommand
+    data object Delete : EditNoteCommand
 }
