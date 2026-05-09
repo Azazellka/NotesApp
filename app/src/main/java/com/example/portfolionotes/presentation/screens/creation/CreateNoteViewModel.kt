@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.portfolionotes.domain.AddNoteUseCase
 import com.example.portfolionotes.domain.ContentItem
+import com.example.portfolionotes.domain.ContentItem.*
 import com.example.portfolionotes.presentation.screens.creation.CreateNoteState.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,11 +25,11 @@ class CreateNoteViewModel @Inject constructor(
     fun processCommand(command: CreateNoteCommand) {
         when (command) {
             CreateNoteCommand.Back -> {
-                _state.update { CreateNoteState.Finished }
+                _state.update { Finished }
             }
             is CreateNoteCommand.InputContent -> {
                 _state.update { previousState ->
-                    if (previousState is CreateNoteState.Creation) {
+                    if (previousState is Creation) {
                         val newContent = previousState.content
                             .mapIndexed { index, contentItem ->
                                 if (index == command.index && contentItem is ContentItem.Text) {
@@ -47,7 +48,7 @@ class CreateNoteViewModel @Inject constructor(
             }
             is CreateNoteCommand.InputTitle -> {
                 _state.update { previousState ->
-                    if (previousState is CreateNoteState.Creation) {
+                    if (previousState is Creation) {
                         previousState.copy(
                             title = command.title,
                         )
@@ -59,13 +60,13 @@ class CreateNoteViewModel @Inject constructor(
             CreateNoteCommand.Save -> {
                 viewModelScope.launch {
                     _state.update { previousState ->
-                        if (previousState is CreateNoteState.Creation) {
+                        if (previousState is Creation) {
                             val title = previousState.title
                             val content = previousState.content.filter {
                                 it !is ContentItem.Text || it.content.isNotBlank()
                             }
                             addNoteUseCase(title = title, content = content)
-                            CreateNoteState.Finished
+                            Finished
                         } else {
                             previousState
                         }
@@ -75,15 +76,29 @@ class CreateNoteViewModel @Inject constructor(
 
             is CreateNoteCommand.AddImage -> {
                 _state.update { previousState ->
-                    if (previousState is CreateNoteState.Creation) {
+                    if (previousState is Creation) {
                         val newItems = previousState.content.toMutableList()
                         val lastItem = newItems.last()
                         if (lastItem is ContentItem.Text && lastItem.content.isBlank()) {
                             newItems.removeAt(newItems.lastIndex)
                         }
-                        newItems.add(ContentItem.Image(url = command.uri.toString()))
-                        newItems.add(ContentItem.Text(content = ""))
+                        newItems.add(Image(url = command.uri.toString()))
+                        newItems.add(Text(content = ""))
                         previousState.copy(content = newItems)
+                    } else {
+                        previousState
+                    }
+                }
+            }
+
+            is CreateNoteCommand.DeleteImage -> {
+                _state.update { previousState ->
+                    if (previousState is CreateNoteState.Creation) {
+                        previousState.content.toMutableList().apply {
+                            removeAt(command.index)
+                        }.let {
+                            previousState.copy(content = it)
+                        }
                     } else {
                         previousState
                     }
@@ -126,6 +141,8 @@ sealed interface CreateNoteCommand {
     ) : CreateNoteCommand
 
     data class AddImage(val uri: Uri): CreateNoteCommand
+
+    data class DeleteImage(val index: Int): CreateNoteCommand
 
     data object Save : CreateNoteCommand
 
