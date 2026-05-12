@@ -1,16 +1,19 @@
 package com.example.portfolionotes.presentation.screens.notes
 
 import android.content.Context
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,17 +33,23 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.example.portfolionotes.R
 import com.example.portfolionotes.domain.ContentItem
 import com.example.portfolionotes.domain.Note
@@ -60,7 +69,7 @@ fun NotesScreen(
 
     val state by viewModel.state.collectAsState()
 
-    Scaffold (
+    Scaffold(
         modifier = modifier,
         floatingActionButton = {
             FloatingActionButton(
@@ -82,7 +91,7 @@ fun NotesScreen(
             item {
                 Title(
                     modifier = modifier.padding(horizontal = 24.dp),
-                    text = "All notes"
+                    text = stringResource(R.string.all_notes)
                 )
             }
             item {
@@ -103,7 +112,7 @@ fun NotesScreen(
             item {
                 Subtitle(
                     modifier = modifier.padding(horizontal = 24.dp),
-                    text = "Pinned"
+                    text = stringResource(R.string.pinned)
                 )
             }
             item {
@@ -118,7 +127,7 @@ fun NotesScreen(
                 ) {
                     itemsIndexed(
                         items = state.pinnedNotes,
-                        key = {index, note -> note.id}
+                        key = { index, note -> note.id }
                     ) { index, note ->
                         NotesCard(
                             modifier = modifier
@@ -140,7 +149,7 @@ fun NotesScreen(
             item {
                 Subtitle(
                     modifier = modifier.padding(horizontal = 24.dp),
-                    text = "Other"
+                    text = stringResource(R.string.other)
                 )
             }
             item {
@@ -148,17 +157,36 @@ fun NotesScreen(
             }
             itemsIndexed(
                 items = state.otherNotes,
-                key = { index, note -> note.id}
+                key = { index, note -> note.id }
             ) { index, note ->
-                NotesCard(
-                    modifier = modifier.padding(horizontal = 24.dp),
-                    note = note,
-                    onNoteClick = onNoteClick,
-                    onLongClick = {
-                        viewModel.processCommand(NotesCommand.SwitchPinnedStatus(note.id))
-                    },
-                    backgroundColor = OtherNotesColors[index % OtherNotesColors.size]
-                )
+                val imageUrl = note.content
+                    .filterIsInstance<ContentItem.Image>()
+                    .map { it.url }
+                    .firstOrNull()
+
+                if (imageUrl == null) {
+                    NotesCard(
+                        modifier = modifier.padding(horizontal = 24.dp),
+                        note = note,
+                        onNoteClick = onNoteClick,
+                        onLongClick = {
+                            viewModel.processCommand(NotesCommand.SwitchPinnedStatus(note.id))
+                        },
+                        backgroundColor = OtherNotesColors[index % OtherNotesColors.size]
+                    )
+                } else {
+                    NotesCardWithImage(
+                        modifier = modifier.padding(horizontal = 24.dp),
+                        note = note,
+                        imageUrl = imageUrl,
+                        onNoteClick = onNoteClick,
+                        onLongClick = {
+                            viewModel.processCommand(NotesCommand.SwitchPinnedStatus(note.id))
+                        },
+                        backgroundColor = OtherNotesColors[index % OtherNotesColors.size]
+                    )
+                }
+
                 Spacer(modifier.height(16.dp))
             }
             item {
@@ -271,12 +299,96 @@ fun NotesCard(
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(modifier.height(24.dp))
         note.content
             .filterIsInstance<ContentItem.Text>()
+            .filter { it.content.isNotBlank() }
             .joinToString("\n")
-            .let {
+            .takeIf { it.isNotBlank() }
+            ?.let {
+                Spacer(modifier.height(24.dp))
                 Text(
+                    text = it,
+                    fontSize = 16.sp,
+                    maxLines = 3,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = FontWeight.Medium,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+    }
+}
+
+@Composable
+fun NotesCardWithImage(
+    modifier: Modifier = Modifier,
+    note: Note,
+    imageUrl: String,
+    backgroundColor: Color,
+    onNoteClick: (Note) -> Unit,
+    onLongClick: (Note) -> Unit
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(backgroundColor)
+            .combinedClickable(
+                onClick = {
+                    onNoteClick(note)
+                },
+                onLongClick = {
+                    onLongClick(note)
+                }
+            )
+
+    ) {
+        Box {
+            AsyncImage(
+                modifier = Modifier
+                    .heightIn(max = 120.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp)),
+                model = imageUrl,
+                contentDescription = "First image from note",
+                contentScale = ContentScale.FillWidth
+            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(
+                        brush = Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            )
+                        )
+                    )
+                    .padding(16.dp)
+                    .align(Alignment.BottomStart)
+            ) {
+                Text(
+                    text = note.title,
+                    fontSize = 14.sp,
+                    maxLines = 1,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = DataFormatter.formatDateToString(timestamp = note.updateAt),
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+        }
+
+        note.content
+            .filterIsInstance<ContentItem.Text>()
+            .filter { it.content.isNotBlank() }
+            .joinToString("\n")
+            .takeIf { it.isNotBlank() }
+            ?.let {
+                Text(
+                    modifier = Modifier.padding(16.dp),
                     text = it,
                     fontSize = 16.sp,
                     maxLines = 3,

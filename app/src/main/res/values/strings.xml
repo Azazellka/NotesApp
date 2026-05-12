@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">PortfolioNotes</string>
+    <string name="pinned">Pinned</string>
+    <string name="other">Other</string>
+    <string name="all_notes">All notes</string>
+    <string name="edit_note">Edit Note</string>
+    <string name="title">Title</string>
+    <string name="save_note">Save Note</string>
+    <string name="create_note">Create Note</string>
+    <string name="just_now">Just now</string>
+    <string name="h_ago">%1$d h ago</string>
 </resources>

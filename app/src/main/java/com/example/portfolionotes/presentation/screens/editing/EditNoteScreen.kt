@@ -28,11 +28,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.example.portfolionotes.R
 import com.example.portfolionotes.presentation.ui.theme.Content
 import com.example.portfolionotes.presentation.ui.theme.CustomIcons
 import com.example.portfolionotes.presentation.utils.DataFormatter
@@ -71,7 +73,7 @@ fun EditNoteScreen(
                     TopAppBar(
                         title = {
                             Text(
-                                text = "Edit Note",
+                                text = stringResource(R.string.edit_note),
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onBackground
@@ -144,7 +146,7 @@ fun EditNoteScreen(
                         placeholder = {
                             Text(
                                 modifier = Modifier.padding(horizontal = 8.dp),
-                                text = "Title",
+                                text = stringResource(R.string.title),
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
@@ -180,7 +182,7 @@ fun EditNoteScreen(
                         },
                         content = {
                             Text(
-                                text = "Save Note",
+                                text = stringResource(R.string.save_note),
                                 color = Color.White,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.W500

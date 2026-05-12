@@ -2,4 +2,12 @@
 <resources>
 
     <style name="Theme.PortfolioNotes" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.PortfolioNotes.SplashScreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/yellow</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.PortfolioNotes</item>
+    </style>
+
+
 </resources>

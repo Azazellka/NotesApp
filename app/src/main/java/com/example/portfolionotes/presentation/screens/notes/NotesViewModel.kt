@@ -2,6 +2,8 @@ package com.example.portfolionotes.presentation.screens.notes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil3.Uri
+import com.example.portfolionotes.domain.ContentItem
 import com.example.portfolionotes.domain.GetAllNotesUseCase
 import com.example.portfolionotes.domain.Note
 import com.example.portfolionotes.domain.SearchNotesUseCase
