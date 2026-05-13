@@ -301,7 +301,8 @@ fun NotesCard(
         )
         note.content
             .filterIsInstance<ContentItem.Text>()
-            .filter { it.content.isNotBlank() }
+            .map { it.content }
+            .filter { it.isNotBlank() }
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
             ?.let {
@@ -383,7 +384,8 @@ fun NotesCardWithImage(
 
         note.content
             .filterIsInstance<ContentItem.Text>()
-            .filter { it.content.isNotBlank() }
+            .map { it.content }
+            .filter { it.isNotBlank() }
             .joinToString("\n")
             .takeIf { it.isNotBlank() }
             ?.let {
