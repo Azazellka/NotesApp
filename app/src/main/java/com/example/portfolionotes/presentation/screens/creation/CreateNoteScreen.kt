@@ -104,7 +104,7 @@ fun CreateNoteScreen(
                         },
                         actions = {
                             Icon(
-                                modifier = modifier
+                                modifier = Modifier
                                     .padding(end = 24.dp)
                                     .clickable {
                                         imagePicker.launch("image/*")
@@ -123,7 +123,6 @@ fun CreateNoteScreen(
                 ) {
                     TextField(
                         modifier = Modifier
-//                            .padding(horizontal = 8.dp)
                             .fillMaxWidth(),
                         value = currentState.title,
                         onValueChange = {
@@ -196,7 +195,6 @@ fun CreateNoteScreen(
                 }
             }
         }
-
         CreateNoteState.Finished -> {
             LaunchedEffect(key1 = Unit) {
                 onFinished()

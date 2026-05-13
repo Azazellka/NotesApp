@@ -30,7 +30,6 @@ class ImageFileManager @Inject constructor(
 
         return file.absolutePath
     }
-
     suspend fun deleteImage(url: String) {
         withContext(Dispatchers.IO) {
             val file = File(url)
@@ -39,10 +38,7 @@ class ImageFileManager @Inject constructor(
             }
         }
     }
-
     fun isInternal(url: String): Boolean {
         return url.startsWith(imageDir.absolutePath)
     }
-
-
 }
